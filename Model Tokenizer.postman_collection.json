@@ -1,0 +1,100 @@
+{
+	"info": {
+		"_postman_id": "9a9adf16-da39-4d47-969f-17c744b0bea4",
+		"name": "Model Tokenizer",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "720438"
+	},
+	"item": [
+		{
+			"name": "Healthcheck",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{protocol}}{{hostname}}:{{port}}/",
+					"host": [
+						"{{protocol}}{{hostname}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Tokenize",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"model\": \"sentence-transformers/all-MiniLM-L6-v2\",\r\n    \"text\": [\r\n        \"this is sentence 1\",\r\n        \"hello, how's your day going today?  it's really nice to see you.\",\r\n        \"hopefully this is a simple sentence; what do you think?  I really can't read your mind.\"\r\n    ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{protocol}}{{hostname}}:{{port}}/tokenize",
+					"host": [
+						"{{protocol}}{{hostname}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"tokenize"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "protocol",
+			"value": "http://",
+			"type": "string"
+		},
+		{
+			"key": "hostname",
+			"value": "localhost",
+			"type": "string"
+		},
+		{
+			"key": "port",
+			"value": "8000",
+			"type": "string"
+		}
+	]
+}

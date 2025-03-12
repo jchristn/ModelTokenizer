@@ -1,0 +1,10 @@
+version: '3'
+
+services:
+  tokenizer:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./models:/app/models
+    restart: unless-stopped
