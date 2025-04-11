@@ -1,8 +1,8 @@
 import os
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional, Union
 import uvicorn
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+from fastapi import FastAPI, HTTPException, Header
+from pydantic import BaseModel, Field
 from transformers import AutoTokenizer
 import logging
 
@@ -20,56 +20,115 @@ os.makedirs(MODELS_DIR, exist_ok=True)
 app = FastAPI(title="Model Tokenizer Microservice")
 
 # Define request and response models
-class TokenizeRequest(BaseModel):
+class SingleTextTokenizeRequest(BaseModel):
     model: str
-    text: List[str]
+    text: str
+    huggingface_api_key: Optional[str] = None  # Optional Hugging Face API key
 
-class TokenizeResponse(BaseModel):
-    tokens: List[List[str]]
+class MultiTextTokenizeRequest(BaseModel):
+    model: str
+    texts: List[str]
+    huggingface_api_key: Optional[str] = None  # Optional Hugging Face API key
+
+class TokenizedItem(BaseModel):
+    text: str
+    tokens: List[str]
+
+class SingleTextTokenizeResponse(BaseModel):
+    text: str
+    tokens: List[str]
+
+class MultiTextTokenizeResponse(BaseModel):
+    results: List[TokenizedItem]
 
 # Create a cache for tokenizers to avoid reloading models
 tokenizer_cache = {}
 
-def get_tokenizer(model_name: str):
+def get_tokenizer(model_name: str, hf_api_key: Optional[str] = None):
     """
     Load a tokenizer model, downloading it if necessary and caching it for reuse.
+    
+    Args:
+        model_name: The name of the Hugging Face model to load
+        hf_api_key: Optional Hugging Face API key for accessing private or gated models
     """
-    if model_name in tokenizer_cache:
+    # Create a cache key that includes the API key (if provided)
+    # This ensures we don't reuse a tokenizer loaded with a different API key
+    cache_key = f"{model_name}_{hf_api_key if hf_api_key else 'public'}"
+    
+    if cache_key in tokenizer_cache:
         logger.info(f"using cached tokenizer for model: {model_name}")
-        return tokenizer_cache[model_name]
+        return tokenizer_cache[cache_key]
     
     try:
         logger.info(f"loading tokenizer for model: {model_name}")
+        
+        # Set the Hugging Face token if provided
+        if hf_api_key:
+            logger.info(f"using provided Hugging Face API key for model: {model_name}")
+            os.environ["HF_TOKEN"] = hf_api_key
+            use_auth_token = True
+        else:
+            use_auth_token = False
+        
         tokenizer = AutoTokenizer.from_pretrained(
             model_name, 
             cache_dir=MODELS_DIR,
-            local_files_only=False  # This will download if not present
+            local_files_only=False,  # This will download if not present
+            use_auth_token=use_auth_token  # Use the API key if provided
         )
-        tokenizer_cache[model_name] = tokenizer
+        
+        tokenizer_cache[cache_key] = tokenizer
         return tokenizer
     except Exception as e:
         logger.error(f"error loading tokenizer for model {model_name}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to load tokenizer: {str(e)}")
 
-@app.post("/tokenize", response_model=TokenizeResponse)
-async def tokenize(request: TokenizeRequest) -> Dict[str, Any]:
+def tokenize_text(tokenizer, text: str) -> List[str]:
     """
-    Tokenize the provided text using the specified model.
+    Tokenize a single text string and return the list of tokens.
     """
-    logger.info(f"tokenizing {len(request.text)} texts with model: {request.model}")
+    encoded = tokenizer.encode(text, add_special_tokens=False)
+    return tokenizer.convert_ids_to_tokens(encoded)
+
+@app.post("/tokenize", response_model=Union[SingleTextTokenizeResponse, MultiTextTokenizeResponse])
+async def tokenize(request: Union[SingleTextTokenizeRequest, MultiTextTokenizeRequest]) -> Dict[str, Any]:
+    """
+    Tokenize the provided text or texts using the specified model.
+    Supports two input formats:
+    1. {"model": "modelname", "text": "sentence"} - for single text
+    2. {"model": "modelname", "texts": ["sentence1", "sentence2"]} - for multiple texts
     
+    A Hugging Face API key can be provided in the request body as huggingface_api_key
+    for accessing private or gated models.
+    """
     try:
-        tokenizer = get_tokenizer(request.model)
-        result = []
+        model_name = request.model
         
-        for text in request.text:
-            # Use the tokenizer to encode the text
-            encoded = tokenizer.encode(text, add_special_tokens=False)
-            # Convert back to tokens (words)
-            tokens = tokenizer.convert_ids_to_tokens(encoded)
-            result.append(tokens)
+        # Get the API key from the request body if provided
+        api_key = None
+        if hasattr(request, 'huggingface_api_key') and request.huggingface_api_key:
+            api_key = request.huggingface_api_key
+            
+        # Get the tokenizer using the API key if provided
+        tokenizer = get_tokenizer(model_name, api_key)
         
-        return {"tokens": result}
+        # Check if this is a single text request or multiple texts request
+        if hasattr(request, 'text'):
+            # Single text request
+            logger.info(f"tokenizing single text with model: {model_name}")
+            tokens = tokenize_text(tokenizer, request.text)
+            return {"text": request.text, "tokens": tokens}
+        else:
+            # Multiple texts request
+            logger.info(f"tokenizing {len(request.texts)} texts with model: {model_name}")
+            results = []
+            
+            for text in request.texts:
+                tokens = tokenize_text(tokenizer, text)
+                results.append({"text": text, "tokens": tokens})
+            
+            return {"results": results}
     except Exception as e:
         logger.error(f"error during tokenization: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Tokenization failed: {str(e)}")

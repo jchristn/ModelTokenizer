@@ -10,19 +10,59 @@ Microservice that tokenizes a series of input strings according to a specified m
 
 Please feel free to start an issue or a discussion!
 
-## Simple Example
-
+## Simple Example - Single Text
 ```
 $ ./dockerrun.sh v1.0.0
-$ curl -X POST "http://localhost:8000/tokenize" -H "Content-Type: application/json" -d '{"model": "sentence-transformers/all-MiniLM-L6-v2", "text": ["Here is sentence 1!", "This is another example."]}'
+$ curl -X POST "http://localhost:8000/tokenize" -H "Content-Type: application/json" -d '{"model": "sentence-transformers/all-MiniLM-L6-v2", "huggingface_api_key": null, "text": "this is a very simple sentence" }'
+
+Response: 200/OK
 {
+  "text": "this is a very simple sentence",
   "tokens": [
-    [
-      "here", "is", "sentence", "1", "!"
-    ],
-    [
-      "this", "is", "another", "example", "."
-    ]
+    "this",
+    "is",
+    "a",
+    "very",
+    "simple",
+    "sentence"
+  ]
+}
+```
+
+## Simple Example - Batch Text
+```
+$ ./dockerrun.sh v1.0.0
+$ curl -X POST "http://localhost:8000/tokenize" -H "Content-Type: application/json" -d '{"model": "sentence-transformers/all-MiniLM-L6-v2", "huggingface_api_key": null, "texts": [ "this is a very simple sentence", "hello, how's your day going today?" ] }'
+
+Response: 200/OK
+{
+  "results": [
+    {
+      "text": "this is a very simple sentence",
+      "tokens": [
+        "this",
+        "is",
+        "a",
+        "very",
+        "simple",
+        "sentence"
+      ]
+    },
+    {
+      "text": "hello, how's your day going today?",
+      "tokens": [
+        "hello",
+        ",",
+        "how",
+        "'",
+        "s",
+        "your",
+        "day",
+        "going",
+        "today",
+        "?"
+      ]
+    }
   ]
 }
 ```
