@@ -41,16 +41,20 @@ class Chunk(BaseModel):
     text: str
     sha256: str
     token_count: int
+    token_index_start: int
+    token_index_end: int
 
 class TokenizedItem(BaseModel):
     text: str
     sha256: str
+    token_count: int
     tokens: List[str]
     chunks: List[Chunk]
 
 class SingleTextTokenizeResponse(BaseModel):
     text: str
     sha256: str
+    token_count: int
     tokens: List[str]
     chunks: List[Chunk]
 
@@ -129,14 +133,16 @@ def chunk_text(
         token_overlap: Number of tokens to overlap between chunks
     
     Returns:
-        List of chunks with their token counts
+        List of chunks with their token counts and token indices
     """
     # If no chunking parameters are provided, return the entire text as one chunk
     if max_chunk_length is None and max_tokens_per_chunk is None:
         return [Chunk(
             text=text,
             sha256=hashlib.sha256(text.encode('utf-8')).hexdigest(),
-            token_count=len(tokens)
+            token_count=len(tokens),
+            token_index_start=0,
+            token_index_end=len(tokens) - 1 if tokens else 0
         )]
     
     # Set default values if only one parameter is provided
@@ -152,26 +158,40 @@ def chunk_text(
         # Determine how many tokens to include in this chunk
         chunk_size = min(max_tokens_per_chunk, len(tokens) - i)
         
+        # Calculate start and end indices for this chunk
+        start_idx = i
+        end_idx = i + chunk_size - 1  # -1 because end index is inclusive
+        
         # If this is not the first chunk and would be a small final chunk,
         # merge it with the previous chunk if possible
         if i > 0 and chunk_size < max_tokens_per_chunk / 2 and len(chunks) > 0:
-            # Get the last chunk's tokens
+            # Get the last chunk
             previous_chunk = chunks.pop()
             
+            # Calculate the new token range
+            if token_overlap > 0:
+                new_start_idx = previous_chunk.token_index_start  # Keep the previous start
+                new_end_idx = end_idx  # Use the current end
+            else:
+                new_start_idx = previous_chunk.token_index_start  # Keep the previous start
+                new_end_idx = end_idx  # Use the current end
+            
             # Create a combined chunk
-            combined_token_ids = token_ids[i-token_overlap:i+chunk_size] if token_overlap > 0 else token_ids[i:i+chunk_size]
+            combined_token_ids = token_ids[new_start_idx:new_end_idx+1]
             combined_text = tokenizer.decode(combined_token_ids)
             
             chunks.append(Chunk(
                 text=combined_text,
                 sha256=hashlib.sha256(combined_text.encode('utf-8')).hexdigest(),
-                token_count=len(combined_token_ids)
+                token_count=len(combined_token_ids),
+                token_index_start=new_start_idx,
+                token_index_end=new_end_idx
             ))
             break
         
         # Get the tokens for this chunk
-        chunk_tokens = tokens[i:i+chunk_size]
-        chunk_token_ids = token_ids[i:i+chunk_size]
+        chunk_tokens = tokens[start_idx:end_idx+1]
+        chunk_token_ids = token_ids[start_idx:end_idx+1]
         
         # Get the text for this chunk
         chunk_text = tokenizer.decode(chunk_token_ids)
@@ -180,7 +200,9 @@ def chunk_text(
         chunks.append(Chunk(
             text=chunk_text,
             sha256=hashlib.sha256(chunk_text.encode('utf-8')).hexdigest(),
-            token_count=len(chunk_tokens)
+            token_count=len(chunk_tokens),
+            token_index_start=start_idx,
+            token_index_end=end_idx
         ))
         
         # If we've covered all tokens, break
@@ -226,6 +248,7 @@ def process_text(
     return {
         "text": text,
         "sha256": text_sha256,
+        "token_count": len(tokens),
         "tokens": tokens,
         "chunks": chunks
     }
