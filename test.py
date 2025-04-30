@@ -6,10 +6,14 @@ def test_tokenizer_api():
     
     payload = {
         "model": "sentence-transformers/all-MiniLM-L6-v2",
-        "text": [
-            "here is sentence 1",
-            "this is another example",
-            "FastAPI microservices are powerful"
+        "huggingface_api_key": null,
+        "max_chunk_length": 128,
+        "max_tokens_per_chunk": 5,
+        "token_overlap": 2,
+        "texts": [
+            "this is a very simple sentence",
+            "hello, how's your day going today?",
+            "The quick brown fox jumped quietly over the lazy dog sitting under the tree"
         ]
     }
     
