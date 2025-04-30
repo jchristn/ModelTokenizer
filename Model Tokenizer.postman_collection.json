@@ -37,7 +37,40 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"model\": \"sentence-transformers/all-MiniLM-L6-v2\",\r\n    \"text\": [\r\n        \"this is sentence 1\",\r\n        \"hello, how's your day going today?  it's really nice to see you.\",\r\n        \"hopefully this is a simple sentence; what do you think?  I really can't read your mind.\"\r\n    ]\r\n}",
+					"raw": "{\r\n    \"model\": \"sentence-transformers/all-MiniLM-L6-v2\",\r\n    \"huggingface_api_key\": null,\r\n    \"max_chunk_length\": 128,\r\n    \"max_tokens_per_chunk\": 4,\r\n    \"token_overlap\": 1,\r\n    \"text\": \"The quick brown fox jumped quietly over the lazy dog sitting under the tree\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{protocol}}{{hostname}}:{{port}}/tokenize",
+					"host": [
+						"{{protocol}}{{hostname}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"tokenize"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Tokenize Batch",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"model\": \"sentence-transformers/all-MiniLM-L6-v2\",\r\n    \"huggingface_api_key\": null,\r\n    \"max_chunk_length\": 128,\r\n    \"max_tokens_per_chunk\": 5,\r\n    \"token_overlap\": 2,\r\n    \"texts\": [\r\n        \"this is a very simple sentence\",\r\n        \"hello, how's your day going today?\",\r\n        \"The quick brown fox jumped quietly over the lazy dog sitting under the tree\"\r\n    ]\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"

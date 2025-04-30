@@ -16,7 +16,7 @@ GOTO :Done
 :Usage
 ECHO.
 ECHO Provide two arguments; the first being the version and the second being 1 or 0 to indicate whether or not to push.
-ECHO Example: dockerbuild.bat v1.0.0 1
+ECHO Example: dockerbuild.bat v2.0.0 1
 
 :Done
 ECHO.
