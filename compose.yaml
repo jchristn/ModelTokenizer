@@ -2,7 +2,7 @@ version: '3'
 
 services:
   tokenizer:
-    build: .
+    image: jchristn77/modeltokenizer:v2.0.0
     ports:
       - "8000:8000"
     volumes:
