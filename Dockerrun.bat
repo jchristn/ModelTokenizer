@@ -8,7 +8,7 @@ docker run ^
   -i ^
   -e "TERM=xterm-256color" ^
   -v .\models\:/app/models ^
-  jchristn/modeltokenizer:%1
+  jchristn77/modeltokenizer:%1
 
 GOTO :Done
 

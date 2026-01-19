@@ -3,13 +3,14 @@ IF "%1" == "" GOTO :Usage
 IF "%2" == "" GOTO :Usage
 ECHO.
 ECHO Building for linux/amd64 and linux/arm64/v8...
-docker buildx build -f Dockerfile --platform linux/amd64,linux/arm64/v8 --tag jchristn/modeltokenizer:%1 --load .
+docker buildx build -f Dockerfile --builder cloud-jchristn77-jchristn77 --platform linux/amd64,linux/arm64/v8 --tag jchristn77/modeltokenizer:%1 --tag jchristn77/modeltokenizer:latest --load .
 
 IF "%2" NEQ "1" GOTO :Done
 
 ECHO.
-ECHO Pushing image...
-docker push jchristn/modeltokenizer:%1
+ECHO Pushing images...
+docker push jchristn77/modeltokenizer:%1
+docker push jchristn77/modeltokenizer:latest
 
 GOTO :Done
 

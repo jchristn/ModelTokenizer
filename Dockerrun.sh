@@ -9,4 +9,4 @@ docker run \
   -t \
   -i \
   -v ./models/:/app/models/ \
-  jchristn/modeltokenizer:$IMG_TAG
+  jchristn77/modeltokenizer:$IMG_TAG

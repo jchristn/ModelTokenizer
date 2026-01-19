@@ -194,7 +194,7 @@ Response: 200/OK
 
 ## Running in Docker
 
-A Docker image is available in [Docker Hub](https://hub.docker.com/r/jchristn/modeltokenizer) under `jchristn/modeltokenizer`.  Use `docker compose up` to run within Docker Compose.  The `./models/` directory will be persisted across container restarts.
+A Docker image is available in [Docker Hub](https://hub.docker.com/r/jchristn77/modeltokenizer) under `jchristn77/modeltokenizer`.  Use `docker compose up` to run within Docker Compose.  The `./models/` directory will be persisted across container restarts.
 
 ## Version History
 
